@@ -41,6 +41,7 @@ public class JavaException {
     }
 
     // 메서드 예외처리 throws : 메서드 사용자에게 예외처리를 강제 => 이 에러가 뜰 수 있으니 알아서 예외처리 하고 사용하세요 라는 뜻
+    // 예외를 던질때 사용하는 throw와 throws를 구별해야 함.
     public void method1(){
         try{
             method2();
