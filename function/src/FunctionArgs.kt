@@ -26,6 +26,7 @@
  * */
 
 fun main() {
+    println("$prop $_const")
     println(greetFirst("Hola", "Kim"))
     println(greetMessage())
 
