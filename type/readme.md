@@ -1,5 +1,6 @@
 포스팅 주소 : https://velog.io/@tkppp-dev/%EC%BD%94%ED%8B%80%EB%A6%B0-%ED%83%80%EC%9E%85-%EC%8B%9C%EC%8A%A4%ED%85%9C
 포스팅 주소 : https://velog.io/@tkppp-dev/%EC%BD%94%ED%8B%80%EB%A6%B0-%ED%83%80%EC%9E%85-%EC%8B%9C%EC%8A%A4%ED%85%9C2
+포스팅 주소 : https://velog.io/@tkppp-dev/%EC%BD%94%ED%8B%80%EB%A6%B0-%ED%83%80%EC%9E%85-%EC%8B%9C%EC%8A%A4%ED%85%9C3
 
 # Nullable
 코틀린은 null이 될 수 있는 타입과 null이 될 수 없는 타입을 구분한다. 만약 변수가 null이 될 수 있는 가능성이 있을 경우에는 해당 변수 타입 뒤에 ?를 붙여 지정해 Nullable한 변수라는 것을 명시해야한다.
@@ -237,3 +238,79 @@ fun fail(message: String) : Nothing {
 val address = company.address ?: fail("No Address")
 ```
 Nothing은 아무것도 반환하지 않기 때문에 타입 파라미터나 반환 타입으로만 사용할 수 있다. 위의 코드에서 fail을 엘비스 연산자의 우항에서 예외가 발생한다는 사실을 컴파일러가 인식하고 address가 널이 될 수 없는 타입임을 추론할 수 있다.
+
+# 컬렉션 타입
+
+## 읽기 전용과 변경 가능한 컬렉션
+코틀린과 자바 컬렉션을 구별하는 가장 큰 차이점으로 코틀린에서는 컬렉션 안의 데이터에 접근하는 인터페이스와 컬렉션 안의 데이터를 변경하는 인터페이스를 구분했다는 것이다.
+
+주의할 점은 읽기 전용 컬렉션이라고 해서 그 컬렉션이 항상 불변하지 않다는 것이다.
+``` kotlin
+val c1 = listOf(1,2,3,4)
+val mc2: MutableCollection<Int> = c1	// 컴파일 에러
+
+val mc2 = mutableListOf(1,2,3,4)
+val c2: Collection<Int> = mc		// 정상 실행
+```
+
+위의 코드를 보면 변경 가능 컬렉션 참조 변수가 읽기 전용 컬렉션 인스턴스를 참조하는 것은 불가능하지만 반대로 읽기 전용 컬렉션 참조 변수가 변경 가능 컬렉션 인스턴스를 참조하는 것은 가능하다. 즉 읽기 전용 컬렉션이 가리키는 인스턴스가 항상 불변하지 않다는 것이고 스레드 안전을 보장하지 않는다.
+
+
+## 코틀린 컬렉션과 자바
+코틀린의 컬렉션은 자바 컬렉션 인터페이스의 인스턴스다. 따라서 자바 코드에서 사용하는데 변환할 필요가 없다. 문제는 코틀린의 읽기 전용 컬렉션을 자바 코드에서 사용할 때다. 자바에서는 이를 구별하지 않기 때문에 읽기 전용 컬렉션이라도 변경이 가능하다. 따라서 자바 코드와 혼용될 여지가 있다면 읽기 전용 컬렉션이라도 변경 가능 컬렉션으로 선언하는게 좋다.
+
+## 자바 컬렉션과 코틀린
+
+자바 코드에서 정의한 타입은 코틀린에서 플랫폼 타입으로 정의된다. 마찬가지로 컬렉션의 타입의 변수 또한 플랫폼 타입이다. 따라서 자바에서 같은 타입일지라도 코틀린에서는 다르게 볼 수 있다.
+
+``` kotlin
+// java
+interface DataParser<T> {
+    void parseData(String input,
+    	List<T> output
+        List<String> errors);
+}
+
+class PersonParser : DataParser<Person> { 
+    overridder parseData(input: String,
+    	output: MutableList<Person>
+        errors: MutableList<String?>
+}
+```
+
+1. 호출하는 쪽에서는 에러 메세지가 항상 필요하므로 List<String\>은 널이 될 수 없다.
+2. errors의 원소는 널이 될 수도 있다. ouput에 들어가는 정보를 파싱하는 과정에서 오류가 발생하지 않으면 그 정보와 연관된 오류 메세지는 널이기 때문이다.
+3. 구현 코드에서 원소를 추가할 수 있어야 하므로 MutableList여야 한다.
+
+# 배열
+코틀린의 배열은 타입 파라미터를 받는 클래스다. 배열의 원소 타입은 그 타입 파라미터에 의해 정해진다.
+
+배열을 만드는 방법은 아래와 같다
+
+1. arrayOf 함수에 원소를 넘기면 배열을 만들 수 있다.
+2. arrayOfNulls 함수에 정수 값을 인자로 넘기면 길이가 인자이고 모든 원소가 null인 배열을 만든다.
+3. Array 생성자를 이용한다. 배열 길이와 람다를 받아 배열 원소를 초기화할 수 있다.
+
+``` kotlin
+// 타입 파라미터는 생략 가능
+val letters = Array<String>(26) { i -> ('a' + i).toString() }
+```
+
+## 컬렉션을 배열로 변환
+함수의 파라미터로 배열을 넘기거나 vararg 인자를 넘기기 위해 컬렉션을 배열로 변환할 필요가 있다. 이때는 toTypedArray 함수를 사용하면 된다.
+
+``` kotlin
+val strings = listOf("a", "b", "c")
+println("%s %s %s".format(*(strings.toTypedArray()))
+```
+
+## 원시 타입 배열
+Array 클래스를 이용한 배열은 박싱된 객체 타입을 받는다. 따라서 Array<Int\> 는 Integer 타입의 배열이다. 원시 타입의 배열을 사용하기 위해서 원시 타입 배열을 위한 클래스를 사용해야한다.
+
+예를 들어 int 타입 배열은 IntArray다. ByteArray, CharArray 등 코틀린은 원시 타입을 위한 배열을 제공한다.
+
+원시 타입 배열을 생성하는 방법은 아래와 같다.
+
+1. 각 배열의 생성자의 인자로 size를 넘겨서 디폴트 값이 0인 배열 생성
+2. intArrayOf( ) 같은 팩토리 함수 사용
+3. 크기오 람다를 받는 생성자 사용
